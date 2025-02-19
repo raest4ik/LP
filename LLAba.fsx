@@ -30,3 +30,5 @@ while continueInput do
 
         // Выводим результат
         printfn "Противоположные числа: %A" opposites 
+
+        
