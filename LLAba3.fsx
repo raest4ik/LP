@@ -103,3 +103,5 @@ while running do
     match processCommand command myList with
     | Some updatedList -> myList <- updatedList // Обновляем список, если команда вернула новый список
     | None -> running <- false // Завершаем цикл, если команда вернула None
+
+    
