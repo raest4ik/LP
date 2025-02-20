@@ -17,18 +17,18 @@ let rec removeElement element list =
         else head :: (removeElement element tail)  (* Иначе оставляем голову и продолжаем поиск в хвосте *)
 
 (* Функция для проверки, существует ли элемент в списке *)
-let rec containsElement element list =
+let rec SUH element list =
     match list with
     | [] -> false  (* Если список пустой, элемент не найден *)
     | head :: tail ->
         if head = element then true  (* Если голова совпадает с элементом, возвращаем true *)
-        else containsElement element tail  (* Иначе продолжаем поиск в хвосте *)
+        else SUH element tail  (* Иначе продолжаем поиск в хвосте *)
 
 (* Функция для объединения двух списков *)
-let rec concatLists list1 list2 =
+let rec doublelist list1 list2 =
     match list1 with
     | [] -> list2  (* Если первый список пустой, возвращаем второй список *)
-    | head :: tail -> head :: (concatLists tail list2)  (* Оставляем голову и объединяем оставшуюся часть с вторым списком *)
+    | head :: tail -> head :: (doublelist tail list2)  (* Оставляем голову и объединяем оставшуюся часть с вторым списком *)
 
 (* Функция для получения элемента по индексу в списке *)
 let rec getElementAt index list =
@@ -62,7 +62,7 @@ let processCommand command myList =
     | "найди" ->
         printfn "Введите элемент для поиска:"
         let element = Console.ReadLine()
-        let exists = containsElement element myList
+        let exists = SUH element myList
         printfn "Элемент %s %s в списке." element (if exists then "есть" else "нет")
         Some myList
 
@@ -70,7 +70,7 @@ let processCommand command myList =
         printfn "Введите элементы второго списка через пробел:"
         let secondListInput = Console.ReadLine().Split(' ')
         let secondList = Array.toList secondListInput
-        let updatedList = concatLists myList secondList
+        let updatedList = doublelist myList secondList
         printfn "Список после сцепки: %A" updatedList
         Some updatedList
 
