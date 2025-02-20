@@ -4,8 +4,6 @@ open System
 let getOppositeNumbers numbers =
     List.map (fun x -> -x) numbers
 
-// Основная программа
-
 let mutable continueInput = true
 
 while continueInput do
@@ -18,10 +16,10 @@ while continueInput do
     else
         // Преобразуем ввод в список чисел
         let numbers =
-            input.Split(' ')
-            |> Array.toList
+            input.Split(' ')//разбили по пробелу
+            |> Array.toList//преобразовали в список строк
             |> List.choose (fun str ->
-                match Int32.TryParse(str) with
+                match Int32.TryParse(str) with//строка в целое число 
                 | (true, num) -> Some num
                 | _ -> None)
 
