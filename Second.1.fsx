@@ -72,6 +72,6 @@ let rec main () =
     // Если программа должна продолжать работать, вызываем main рекурсивно
     if processUserInput input then
         main ()
-
+main()
 
 
