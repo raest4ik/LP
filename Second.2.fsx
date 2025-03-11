@@ -6,12 +6,12 @@ let generateRandomString (length: int) =
     let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     let random = Random()
     // Создаем новую строку из массива случайных символов
-    new string(Array.init length (fun _ -> chars.[random.Next(chars.Length)]))
+    new string(Array.init length (fun _ -> chars.[random.Next(chars.Length)]))//массив длины lendth,генерим список из случайных
 
 // Определяем функцию для подсчета суммарной длины строк в списке
 let sumStringLengths (strings: string list) =
     // Используем List.fold для накопления суммы длин строк
-    List.fold (fun (acc: int) (s: string) -> acc + s.Length) 0 strings
+    List.fold (fun (acc: int) (s: string) -> acc + s.Length) 0 strings//акумулятор хранит текущую длину строк,s-текущая строка
 
 let checkInput (input: string) =
     if input.ToLower() = "stop" then
@@ -22,7 +22,7 @@ let checkInput (input: string) =
 let generateRandomList (count: int) (maxLength: int) =
     let random = Random()
     // Генерируем список случайных строк
-    List.init count (fun _ -> generateRandomString (random.Next(maxLength + 1)))
+    List.init count (fun _ -> generateRandomString (random.Next(maxLength + 1)))//список длины count, генерация рандом строки от индекса 0 до макс длины
 
 let rec main (strings: string list) =
     printfn "Выберите вариант:"
@@ -34,17 +34,13 @@ let rec main (strings: string list) =
     | Some "1" ->
         printfn "Введите строку: "
         let userString = Console.ReadLine()
-        // Добавляем введенную строку в список
         let newStrings = userString :: strings
-        // Выводим суммарную длину всех введенных строк
         printfn "Суммарная длина всех введенных строк: %d" (sumStringLengths newStrings)
         // Рекурсивно вызываем функцию main с обновленным списком
         main newStrings
     | Some "2" ->
         let randomString = generateRandomString 10
-        // Добавляем сгенерированную строку в список
         let newStrings = randomString :: strings
-        // Выводим сгенерированную строку
         printfn "Сгенерированная строка: %s" randomString
         printfn "Суммарная длина всех введенных строк: %d" (sumStringLengths newStrings)
         main newStrings
@@ -56,4 +52,4 @@ let rec main (strings: string list) =
         printfn "Программа завершена."
 
 // Запускаем функцию main с пустым списком
-main []
+main[]
