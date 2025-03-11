@@ -1,9 +1,9 @@
 open System
 open System.IO
 
-// подсчет суммарной длины строк
-let getTotalStringLength (strings: seq<string>) =
-    strings |> Seq.fold (fun acc s -> acc + s.Length) 0
+// подсчет суммарной длины строк, учитывая пустые строки как строки длиной 1
+let getTotalStringLengthWithEmpty (strings: seq<string>) =
+    strings |> Seq.fold (fun acc s -> acc + if String.IsNullOrWhiteSpace(s) then 1 else s.Length) 0
 
 // чтение строк из файла
 let RSF (path: string) =
@@ -21,11 +21,13 @@ let RS count =
         seq {
             for i in 1 .. count do
                 printf "Введите строку или 'stop' для выхода: "
-                let input = Console.ReadLine().Trim()
-                if input.ToLower() = "stop" then yield! Seq.empty else yield input
+                let input = Console.ReadLine()
+                if input.ToLower() = "stop" then
+                    yield! Seq.empty
+                else
+                    yield input
         }
     )
-
 
 let rec main () =
     printfn "Выберите способ ввода строк:"
@@ -38,7 +40,7 @@ let rec main () =
         match System.Int32.TryParse(Console.ReadLine()) with
         | true, count when count > 0 ->
             let strings = RS count
-            let totalLength = getTotalStringLength strings.Value
+            let totalLength = getTotalStringLengthWithEmpty strings.Value
             printfn "Суммарная длина строк: %d" totalLength
             main()
         | _ ->
@@ -47,7 +49,7 @@ let rec main () =
     | "2" ->
         let path = "number.txt" 
         let strings = RSF path
-        let totalLength = getTotalStringLength strings.Value
+        let totalLength = getTotalStringLengthWithEmpty strings.Value
         printfn "Суммарная длина строк из файла: %d" totalLength
         main()
     | "0" -> printfn "Выход из программы"
