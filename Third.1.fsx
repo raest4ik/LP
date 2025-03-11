@@ -1,19 +1,19 @@
 open System
 open System.IO
 
-// ввод натуральных чисел
+// ввод целых чисел
 let rec INN count collected =
     if count = 0 then
         Some collected
     else
-        printf "Введите натуральное число или 'stop' для выхода: "
+        printf "Введите целое число или 'stop' для выхода: "
         let input = Console.ReadLine().Trim()
         if input.ToLower() = "stop" then None
         else
             match System.Int32.TryParse(input) with
-            | true, n when n > 0 -> INN (count - 1) (collected @ [n])
+            | true, n -> INN (count - 1) (collected @ [n])
             | _ ->
-                printfn "Ошибка: введите положительное целое число!"
+                printfn "Ошибка: введите целое число!"
                 INN count collected
 
 // чтение чисел из файла
@@ -24,7 +24,7 @@ let readNumbersFromFileLazy (path: string) =
             while not reader.EndOfStream do
                 let line = reader.ReadLine().Trim()
                 match System.Int32.TryParse(line) with
-                | true, n when n > 0 -> yield n
+                | true, n -> yield n
                 | _ -> printfn "Пропуск некорректной строки: %s" line
         } |> Seq.cache
     )
@@ -34,9 +34,9 @@ let getMaxDigitsList (numbers: seq<int>) =
     let rec findMaxDigit n maxDigit =
         if n = 0 then maxDigit
         else
-            let digit = n % 10
+            let digit = abs (n % 10)
             let newMax = if digit > maxDigit then digit else maxDigit
-            findMaxDigit (n / 10) newMax
+            findMaxDigit (abs (n / 10)) newMax
     
     numbers |> Seq.map (fun n -> findMaxDigit n 0)
 
