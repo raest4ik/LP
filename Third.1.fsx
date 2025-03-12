@@ -20,14 +20,17 @@ let rec INN count collected =
 let readNumbersFromFileLazy (path: string) =
     lazy (
         seq {
-            use reader = new StreamReader(path : string)
+            use reader = new StreamReader(path)
             while not reader.EndOfStream do
                 let line = reader.ReadLine().Trim()
                 match System.Int32.TryParse(line) with
-                | true, n -> yield n
+                | true, n ->
+                    printfn "Вычислено и выдано число: %d" n
+                    yield n
                 | _ -> printfn "Пропуск некорректной строки: %s" line
         } |> Seq.cache
     )
+
 
 // получение последовательности максимальных цифр
 let getMaxDigitsList (numbers: seq<int>) =
