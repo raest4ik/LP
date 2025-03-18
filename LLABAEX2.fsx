@@ -15,16 +15,16 @@ let rec insert value tree =
 
 
 let rec inputTree tree =
-    printf "Введите строку (или 'exit' для завершения): "
+    printf "Введите строку (или 'stop' для завершения): "
     match Console.ReadLine() with
-    | "exit" -> tree
+    | "stop" -> tree
     | input -> inputTree (insert input tree)
 
 
 let randomTree size =
     let randomString () =
         let chars = "abcdefghijklmnopqrstuvwxyz123456789"
-        let length = Random().Next(3, 8)
+        let length = Random().Next(3, 4)
         String.init length (fun _ -> chars.[Random().Next(chars.Length)].ToString())
     let rec generate n tree =
         if n = 0 then tree
