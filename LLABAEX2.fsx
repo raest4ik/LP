@@ -53,8 +53,12 @@ let rec foldTree f acc tree =
 
 let findNodesWithTwoLeaves acc tree value =
     match tree with
-    | Node(_, Node(_, Empty, Empty), Node(_, Empty, Empty)) -> value :: acc
+    | Node(_, left, right) when 
+        (match left with Node(_, Empty, Empty) -> true | _ -> false) &&
+        (match right with Node(_, Empty, Empty) -> true | _ -> false) -> 
+        value :: acc
     | _ -> acc
+
 
 let task2 tree = foldTree findNodesWithTwoLeaves [] tree
 
