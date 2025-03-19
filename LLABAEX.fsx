@@ -51,7 +51,7 @@ let rec mapTree f tree =
 let shiftChar c = char (int c + 1)
 let shiftString s = String.map shiftChar s//для каждого в строке
 
-let task1 tree = mapTree shiftString tree
+let supernewt tree = mapTree shiftString tree//создание нового дерева от char+1
 
 // Обход дерева и вывод в виде списков
 let rec preOrder tree =
@@ -83,7 +83,7 @@ let rec selectTreeInput () =
         printfn "Ошибка выбора!"
         selectTreeInput()
 
-// Главное меню
+
 let rec mainMenu () =
     printfn "\nПреобразование дерева с помощью map:"
     printfn "1 - Выбрать дерево"
@@ -96,7 +96,7 @@ let rec mainMenu () =
             printfn "\nИсходное дерево:"
             printTree tree
             printfn "\nПрямой обход (pre-order): %A" (preOrder tree)
-            let mappedTree = task1 tree
+            let mappedTree = supernewt tree
             printfn "\nПосле преобразования:"
             printTree mappedTree
             printfn "\nПрямой обход (pre-order): %A" (preOrder mappedTree)

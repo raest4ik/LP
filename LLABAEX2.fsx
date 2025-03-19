@@ -42,7 +42,6 @@ let printTree tree =
             printTreeIndented left (indent + 4)
     printTreeIndented tree 0
 
-
 let rec foldTree f acc tree =
     match tree with
     | Empty -> acc
@@ -59,7 +58,6 @@ let findNodesWithTwoLeaves acc tree value =
 
 let task2 tree = foldTree findNodesWithTwoLeaves [] tree
 
-// Обход дерева и вывод в виде списков
 let rec preOrder tree =
     match tree with
     | Empty -> []
