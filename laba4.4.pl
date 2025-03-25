@@ -1,6 +1,4 @@
 
-
-% Определяем возможные кандидаты для каждой роли
 expedition(Bio, Hyd, Syn, Rad, Mech, Doc) :-
     member(Bio, [e, g]),
     member(Hyd, [b, f]),
@@ -19,25 +17,25 @@ expedition(Bio, Hyd, Syn, Rad, Mech, Doc) :-
     \+ (Rad = c, member(g, [Bio, Hyd, Syn, Mech, Doc])),  % C и G не могут быть вместе
     \+ (Doc = a, member(b, [Bio, Hyd, Syn, Rad, Mech, Doc])).  % A и B не могут быть вместе
 
-% Проверка, что все выбранные участники различны
+
 all_different([]).
 all_different([H|T]) :-
     \+ member(H, T),
     all_different(T).
 
-% Вывод всех возможных составов экспедиции
+
 print_expeditions :-
     findall([Bio, Hyd, Syn, Rad, Mech, Doc], expedition(Bio, Hyd, Syn, Rad, Mech, Doc), Teams),
     print_results(Teams).
 
-% Вывод списка команд
+
 print_results([]) :-
     write('Больше нет возможных составов'), nl.
 print_results([H|T]) :-
     write('Возможный состав: '), write(H), nl,
     print_results(T).
 
-%главный предикат
+
 main :-
     print_expeditions.
     
