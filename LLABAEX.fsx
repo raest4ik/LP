@@ -4,7 +4,6 @@ type Tree =
     | Node of string * Tree * Tree
     | Empty
 
-
 let rec insert value tree =
     match tree with
     | Empty -> Node(value, Empty, Empty)
@@ -19,7 +18,6 @@ let rec inputTree tree =
     | "stop" -> tree
     | input -> inputTree (insert input tree)
 
-
 let randomTree size =
     let randomString () =
         let chars = "abcdefghijklmnopqrstuvwxyz123456789"
@@ -29,7 +27,6 @@ let randomTree size =
         if n = 0 then tree
         else generate (n - 1) (insert (randomString()) tree)
     generate size Empty
-
 
 let printTree tree =
     let rec printTreeIndented tree indent =
@@ -47,18 +44,19 @@ let rec mapTree f tree =
     | Node(value, left, right) ->
         Node(f value, mapTree f left, mapTree f right)
 
+// Функция для вычисления суммы цифр в строке
+let sumDigits s =
+    let digits = s |> Seq.filter (fun c -> Char.IsDigit c)
+    let sum = digits |> Seq.sumBy (fun c -> int c - int '0')
+    if sum > 0 then sum.ToString() else s
 
-let shiftChar c = char (int c + 1)
-let shiftString s = String.map shiftChar s//для каждого в строке
-
-let supernewt tree = mapTree shiftString tree//создание нового дерева от char+1
+let task1 tree = mapTree sumDigits tree
 
 // Обход дерева и вывод в виде списков
 let rec preOrder tree =
     match tree with
     | Empty -> []
     | Node(value, left, right) -> value :: preOrder left @ preOrder right
-
 
 let rec selectTreeInput () =
     printfn "\nВыберите способ заполнения дерева:"
@@ -83,7 +81,7 @@ let rec selectTreeInput () =
         printfn "Ошибка выбора!"
         selectTreeInput()
 
-
+// Главное меню
 let rec mainMenu () =
     printfn "\nПреобразование дерева с помощью map:"
     printfn "1 - Выбрать дерево"
@@ -96,7 +94,7 @@ let rec mainMenu () =
             printfn "\nИсходное дерево:"
             printTree tree
             printfn "\nПрямой обход (pre-order): %A" (preOrder tree)
-            let mappedTree = supernewt tree
+            let mappedTree = task1 tree
             printfn "\nПосле преобразования:"
             printTree mappedTree
             printfn "\nПрямой обход (pre-order): %A" (preOrder mappedTree)
