@@ -1,168 +1,137 @@
 #include <windows.h>
 #include <iostream>
+#include <ctime>
 
+const int m = 10, n = 20; // m - число строк, n - число столбцов
 
-const int m = 10, n = 20;
-float mtx[m][n], // матрица
-col_sums[n]; // массив сумм
+float mtx[m][n];        // матрица вещественных чисел
+float row_avgs[m];      // массив средних по строкам
+int row_numbers[m];     // номера строк 
 
-int col_numbers[n]; // номера столбцов
-
-// Функция потока
-DWORD WINAPI col_sum(LPVOID param)
+// Функция потока - заполнение одной строки случайными вещественными числами
+DWORD WINAPI row_fill(LPVOID param)
 {
- // Получаем значение параметра 
- int* pcol_num = (int*)param;
- int col_num = *pcol_num;
 
- // Находим искомую сумму
- col_sums[col_num] = 0;
- for (int i = 0; i < m; i++)
-  col_sums[col_num] += (mtx[i][col_num]);
+    srand(time(0));
+    
+    int* prow_num = (int*)param;
+    int row = *prow_num;
 
- return 0;
+    for (int j = 0; j < n; ++j)
+    {
+        mtx[row][j] = (rand()) + (float)rand()/100;
+    }
+    return 0;
 }
 
+// Функция потока - вычисление среднего значения по одной строке
+DWORD WINAPI row_avg(LPVOID param)
+{
+    int* prow_num = (int*)param;
+    int row = *prow_num;
 
-DWORD WINAPI matrix_create(LPVOID param) {
- srand(time(0));
- // Получаем значение параметра 
- int* pcol_num = (int*)param;
- int i = *pcol_num;
-
- // Создание матрицы
- for (int j = 0; j < n; j++)
-  mtx[i][j] = (float)(rand());
-
- return 0;
+    float sum = 0.0f;
+    for (int j = 0; j < n; ++j)
+        sum += mtx[row][j];
+    row_avgs[row] = sum / n;
+    return 0;
 }
 
-
-void print_m(float mtx[m][n]) {
- for (int i = 0; i < m; i++) {
-  for (int j = 0; j < n; j++) {
-   std::cout <<" " << mtx[i][j];
-  }
-  std::cout << "\n";
- }
+void print_m(const float a[m][n]) {
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            std::cout << " " << a[i][j];
+        }
+        std::cout << "\n";
+    }
 }
 
-int main(int argc) {
+int main()
+{
+    setlocale(LC_ALL, "rus");
+    srand(static_cast<unsigned>(time(NULL)));
 
- setlocale(LC_ALL, "rus");
- // Описание переменных для работы с потоками
- // массив из n указателей потоков
- HANDLE hThread[n];
- // массив из n идентификаторов потоков
- DWORD dwThreadID[n];
+    // Инициализация номеров строк
+    for (int i = 0; i < m; ++i) {
+        row_numbers[i] = i;
+        row_avgs[i] = 0.0f;
+    }
 
- // массив из n указателей потоков для заполнения матрицы
- HANDLE createhThread[n];
- // массив из n идентификаторов потоков для заполнения матрицы
- DWORD createdwThreadID[n];
+    // Потоки для заполнения строк
+    HANDLE fillThreads[m];
+    DWORD fillIDs[m];
 
- // Заполнение массивов исходными значениями
- for (int i = 0; i < n; i++)
- {
-  col_sums[i] = 0;
-  col_numbers[i] = i;
- }
+    for (int i = 0; i < m; ++i) {
+        fillThreads[i] = CreateThread(
+            NULL,               // безопасность по умолчанию
+            0,                  // размер стека по умолчанию
+            row_fill,           // функция
+            &row_numbers[i],    // параметр (номер строки)
+            0,                  // флаги создания
+            &fillIDs[i]);       // id потока
+
+        // Проверям - создан ли поток
+        if (fillThreads[i] == NULL)
+        {
+            std::cout << "Поток № " << i
+                << "не был создан\n"
+                << "Ошибка "
+                << GetLastError();
+        }
+    }
+
+    // Ждём завершения всех потоков заполнения
+    WaitForMultipleObjects(m, fillThreads, TRUE, INFINITE);
+
+    // Закрытие потоков
+    for (int i = 0; i < m; ++i)
+        CloseHandle(fillThreads[i]);
+
+    std::cout << "Вывод матрицы:\n";
+    print_m(mtx);
+
+    // Потоки для вычисления среднего по строкам
+    HANDLE avgThreads[m];
+    DWORD avgIDs[m];
+
+    for (int i = 0; i < m; ++i) {
+        avgThreads[i] = CreateThread(
+            NULL,
+            0,
+            row_avg,
+            &row_numbers[i],
+            0,
+            &avgIDs[i]);
+
+        if (avgThreads[i] == NULL)
+        {
+            std::cout << "Поток № " << i
+                << "не был создан\n"
+                << "Ошибка "
+                << GetLastError();
+        }
+    }
+
+    // Ждём завершения всех потоков вычисления
+    WaitForMultipleObjects(m, avgThreads, TRUE, INFINITE);
+
+    // Закрытие потоков
+    for (int i = 0; i < m; ++i)
+        CloseHandle(avgThreads[i]);
+
+    // Находим номер строки с максимальным средним значением
+    int num_max = 0;
+    float max_avg = row_avgs[0];
+    for (int i = 1; i < m; ++i) {
+        if (row_avgs[i] > max_avg) {
+            max_avg = row_avgs[i];
+            num_max = i;
+        }
+    }
 
 
+    std::cout << "Искомая строка с максимальным средним: № " << num_max
+        << " (" << max_avg << ")\n";
 
- //Запуск потоков создания матрицы 
- for (int i = 0; i < m; i++)
- {
-  createhThread[i] = CreateThread(
-   // атрибуты безопасности по умолчанию
-   NULL,
-   // размер стека по умолчанию
-   0,
-   // имя функции      
-   matrix_create,
-   // указатель на параметры    
-   &(col_numbers[i]),
-   // флаг создания = 0
-   0,
-   // адрес переменной для идентификатора   
-   &(createdwThreadID[i]));
-
-  // Проверям - создан ли поток
-  if (createhThread[i] == NULL)
-  {
-   std::cout << "Поток № " << i
-    << "не был создан\n"
-    << "Ошибка "
-    << GetLastError();
-  }
- }
-
- 
-
- // Ожидаем завершения потоков
- WaitForMultipleObjects(n, createhThread,
-  true, INFINITE);
-
- // Закрытие потоков
- for (int i = 0; i < n; i++)
-  CloseHandle(createhThread[i]);
-
-
- std::cout << "вывод матрицы: \n";
- print_m(mtx);
-
-
-
- //Запуск потоков подсчёта 
- for (int i = 0; i < n; i++)
- {
-  hThread[i] = CreateThread(
-   // атрибуты безопасности по умолчанию
-   NULL,
-   // размер стека по умолчанию
-   0,
-   // имя функции      
-   col_sum,
-   // указатель на параметры    
-   &(col_numbers[i]),
-   // флаг создания = 0
-   0,
-   // адрес переменной для идентификатора   
-   &(dwThreadID[i]));
-
-  // Проверям - создан ли поток
-  if (hThread[i] == NULL)
-  {
-   std::cout << "Поток № " << i
-    << "не был создан\n"
-    << "Ошибка "
-    << GetLastError();
-  }
- }
-
- // Ожидаем завершения потоков
- WaitForMultipleObjects(n, hThread,
-  true, INFINITE);
-
- // Находим номер столбца с минимальной суммой
- int num_min = 0;
- float min = col_sums[0];
-
- for (int i = 1; i < n; i++)
- {
-  if (min > col_sums[i])
-  {
-   min = col_sums[i];
-   num_min = i;
-  }
- }
-
- // Вывод результата
- std::cout << "Искомый столбец № "
-  << num_min << '\n';
- // Закрытие потоков
- for (int i = 0; i < n; i++)
-  CloseHandle(hThread[i]);
-
- return 0;
+    return 0;
 }
