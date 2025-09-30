@@ -1,108 +1,121 @@
-#include <windows.h>
 #include <iostream>
+using namespace std;
+#include <windows.h>
 #include <ctime>
 
-const int m = 10, n = 20; // m - число строк, n - число столбцов
+const int N = 4;
+float matrix[N][N];     // исходная матрица
 
-float mtx[m][n];        // матрица вещественных чисел
-int row_numbers[m];     // номера строк 
-int col_numbers[n];     // номера столбцов
+// Структура для передачи параметров в поток
+struct ThreadData {
+    int col;           // столбец для которого вычисляем минор
+    float result;      // результат вычисления минора
+};
 
-// Функция потока - заполнение одной строки случайными вещественными числами
-DWORD WINAPI row_fill(LPVOID param)
-{
+// Функция для вычисления определителя матрицы 3x3
+float determinant3x3(float a[3][3]) {
+    return a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) -
+        a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) +
+        a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
+}
 
-    int* prow_num = (int*)param;
-    int row = *prow_num;
-
-    srand(time(0)+row);
-
-    for (int j = 0; j < n; ++j)
-    {
-        mtx[row][j] = (rand()) + (float)rand() / 100;
+// Функция для получения минора 3x3
+void getMinor(float source[N][N], float dest[3][3], int row, int col) {
+    int di = 0, dj = 0;
+    for (int i = 0; i < N; i++) {
+        if (i == row) continue;
+        dj = 0;
+        for (int j = 0; j < N; j++) {
+            if (j == col) continue;
+            dest[di][dj] = source[i][j];
+            dj++;
+        }
+        di++;
     }
+}
+
+// Функция потока - вычисление одного элемента разложения
+DWORD WINAPI calculate_minor(LPVOID param) {
+    ThreadData* data = (ThreadData*)param;
+    int col = data->col;
+
+    // Получаем минор 3x3
+    float minor[3][3];
+    getMinor(matrix, minor, 0, col);
+
+    // Вычисляем определитель минора
+    float minor_det = determinant3x3(minor);
+
+    // Учитываем знак (-1)^(i+j)
+    float sign = (col % 2 == 0) ? 1.0f : -1.0f;
+
+    // Вычисляем элемент разложения
+    data->result = sign * matrix[0][col] * minor_det;
+
+    cout << "Поток для столбца " << col+1 << ": " << data->result << endl;
     return 0;
 }
 
-
-
-DWORD WINAPI col_sort(LPVOID param)
-{
-    int col = *(int*)param;
-    for (int i = 0; i < m - 1; ++i) {
-        for (int k = i + 1; k < m; ++k) {
-            if (mtx[i][col] > mtx[k][col]) {
-                float tmp = mtx[i][col];
-                mtx[i][col] = mtx[k][col];
-                mtx[k][col] = tmp;
-            }
+// Функция для заполнения матрицы случайными числами
+void fillMatrixRandom() {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            matrix[i][j] = rand() % 10;
         }
     }
-    return 0;
 }
 
+int main() {
+    setlocale(LC_ALL, "ru_RU.UTF-8");
 
-void print_m(const float a[m][n]) {
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            std::cout << " " << a[i][j];
+    // Инициализация генератора случайных чисел
+    srand((unsigned int)time(NULL));
+
+    // Заполнение матрицы случайными числами
+    fillMatrixRandom();
+
+    // Вывод матрицы
+    cout << "\nСгенерированная матрица:\n";
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            cout << matrix[i][j] << "\t";
         }
-        std::cout << "\n";
+        cout << endl;
     }
-}
-int main()
-{
-    setlocale(LC_ALL, "rus");
-    srand(static_cast<unsigned>(time(NULL)));
-    // Инициализация номеров строк и столбцов
-    for (int i = 0; i < m; ++i) row_numbers[i] = i;
-    for (int j = 0; j < n; ++j) col_numbers[j] = j;
-    // Потоки для заполнения строк
-    HANDLE fillThreads[m];
-    DWORD fillIDs[m];
-    for (int i = 0; i < m; ++i) {
-        fillThreads[i] = CreateThread(
-            NULL,
-            0,
-            row_fill,
-            &row_numbers[i],
-            0,
-            &fillIDs[i]);
-        if (fillThreads[i] == NULL)
-        {
-            std::cout << "Поток заполнения № " << i << " не был создан. Ошибка " << GetLastError() << "\n";
-            return 1;
-        }
-    }
-    // Ждём завершения всех потоков заполнения
-    WaitForMultipleObjects(m, fillThreads, TRUE, INFINITE);
-    for (int i = 0; i < m; ++i) 
-        CloseHandle(fillThreads[i]);
-    std::cout << "Матрица до сортировки столбцов:\n";
-    print_m(mtx);
-    // Потоки для параллельной сортировки столбцов
-    HANDLE sortThreads[n];
-    DWORD sortIDs[n];
-    for (int j = 0; j < n; ++j) {
-        sortThreads[j] = CreateThread(
-            NULL,
-            0,
-            col_sort,
-            &col_numbers[j],
-            0,
-            &sortIDs[j]);
-        if (sortThreads[j] == NULL)
-        {
-            std::cerr << "Поток сортировки столбца № " << j << " не был создан. Ошибка " << GetLastError() << "\n";
-            // В случае ошибки закрываем уже созданные и выходим
-            for (int k = 0; k < j; ++k) CloseHandle(sortThreads[k]);
-            return 1;
+
+    // Подготовка данных для потоков
+    ThreadData thread_data[N];
+    HANDLE hThreads[N];
+    DWORD dwThreadID[N];
+
+    // Запуск потоков для вычисления элементов разложения
+    for (int j = 0; j < N; j++) {
+        thread_data[j].col = j;
+        thread_data[j].result = 0;
+
+        hThreads[j] = CreateThread(
+            NULL, 0, calculate_minor, &thread_data[j], 0, &dwThreadID[j]);
+
+        if (hThreads[j] == NULL) {
+            cout << "Ошибка создания потока для столбца " << j << endl;
         }
     }
-    // Ждём завершения всех потоков сортировки
-    WaitForMultipleObjects(n, sortThreads, TRUE, INFINITE);
-    for (int j = 0; j < n; ++j) CloseHandle(sortThreads[j]);
-    std::cout << "\nМатрица сортировки столбцов:\n";
-    print_m(mtx);
+
+    // Ожидаем завершения всех потоков
+    WaitForMultipleObjects(N, hThreads, TRUE, INFINITE);
+
+    // Суммируем результаты для получения определителя
+    float determinant = 0;
+    for (int j = 0; j < N; j++) {
+        determinant += thread_data[j].result;
+    }
+
+    cout << "Определитель матрицы: " << determinant << endl;
+
+    // Закрытие потоков
+    for (int j = 0; j < N; j++) {
+        CloseHandle(hThreads[j]);
+    }
+
     return 0;
 }
